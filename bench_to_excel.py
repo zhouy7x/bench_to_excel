@@ -43,11 +43,11 @@ class JetStream2(Base):
         cont = content.replace("=\n", "")
         score = re.search(r'<div class=3D"score">(\d+\.\d+)</div>', cont).group(1)
         name_ls.append('Score')
-        score_ls.append(score)
+        score_ls.append(float(score))
         cont_ls = re.findall(r'<h3[\d\D]*?><[\d\D]*?>(.*?)</a></h3>[\d\D]*?<h4[\d\D]*?>(.*?)</h4>', cont, re.S)
         for i in cont_ls:
             name_ls.append(i[0])
-            score_ls.append(i[1])
+            score_ls.append(float(i[1]))
         return name_ls, score_ls
 
 
