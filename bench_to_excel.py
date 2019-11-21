@@ -287,12 +287,28 @@ class Webtooling(Base):
 
 if __name__ == '__main__':
     file_name = "scores.xls"
-    with utils.touch_excel(file_name) as writer:
-        benchs = list()
-        benchs.append(JetStream2(writer))
-        # benchs.append(Speedometer2(writer))
-        # benchs.append(Ares(writer))
-        # benchs.append(Webtooling(writer))
+    choice = input('1.Jetstream2    2.Speedometer2    3.Ares    4.Webtooling\n' +
+                   'Please input number or numbers split by ",":    ')
+    if choice:
+        choice_list = choice.split(',')
+        for i in choice_list:
+            if int(i) not in [1, 2, 3, 4]:
+                print("The number is wrong, please run again!")
+                break
+        else:
+            with utils.touch_excel(file_name) as writer:
+                benchs = list()
+                for i in choice_list:
+                    if int(i) == 1:
+                        benchs.append(JetStream2(writer))
+                    elif int(i) == 2:
+                        benchs.append(Speedometer2(writer))
+                    elif int(i) == 3:
+                        benchs.append(Ares(writer))
+                    elif int(i) == 4:
+                        benchs.append(Webtooling(writer))
 
-        for bench in benchs:
-            bench.run()
+                for bench in benchs:
+                    bench.run()
+    else:
+        print('The number is none, please run again!')
