@@ -7,6 +7,12 @@ from pandas import DataFrame
 import utils
 import argparse
 
+# unity3d
+import pytesseract
+from PIL import Image
+import sys
+import difflib
+
 parser = argparse.ArgumentParser()
 # parser.usage = help_msg
 parser.add_argument('-m', '--mode', type=str, choices=['simple', 'all'], default="simple",
@@ -285,14 +291,143 @@ class Webtooling(Base):
         return name_ls, score_ls
 
 
+class Unity3D(Base):
+    def __init__(self, writer):
+        Base.__init__(self, "unity3d", "unity3d", writer)
+
+    def run(self):
+        self.case_warehouse = ['Mandelbrot Script','Instantiate & Destroy','CryptoHash Script','Animation & Skinning','Asteroid Field','Particles','Physics Meshes','Physics Cubes','Physics Spheres','2D Physics Spheres','2D Physics Boxes','AI Agents']
+        src_ls = os.popen("ls %s" % self.folder).readlines()
+        src_ls = list(map(lambda x: x.replace('\n', ''), src_ls))
+        i = 0
+        for src in src_ls:
+            i += 1
+            file = self.folder + "/" + src
+            # print(file)
+            names, scores = self._run(file)
+            if names == 5 or scores == 5:
+                continue
+            if 'name' not in self.df:
+                self.df['name'] = names
+            self.df[i] = scores
+
+        self.df.to_excel(self.writer, index=False, sheet_name=self.name)
+
+    def _run(self, file):
+        name_ls = []
+        score_ls = []
+        # print(file)
+        picture = file
+        if picture:
+            print(picture)
+            image = Image.open(picture)
+            text = pytesseract.image_to_string(image,lang="test")
+            result = self._Handle(text)
+            if result not in [1,2,3,4]:
+                name_ls = result[0]
+                score_ls = result[1]
+            else:
+                return 5,5
+        return name_ls, score_ls
+
+
+    def _Handle(self,text):
+        # print(text)
+        name_ls_ex = []
+        score_ls_ex = []
+        name_ls_ex_finally =[]
+
+        # Total score
+        total_score = re.findall(r'(\d*)$', text, re.S)
+        # print(total_score)
+        try:
+            total_score = total_score[0]
+            int(total_score)
+
+        except:
+            print("Total score error")
+            return 1
+
+        if int(total_score) < 10000:
+            print("The total score is too low and there may be anomalies")
+            return 2
+
+
+        text_ls = re.findall(r'(.*?)\n', text, re.S)
+        score_ls = []
+        message_useless = ["select","benchmarks","run","all","overall","score"]
+        # print(text_ls)
+        sigle_mode = 0
+        # print(text_ls)
+        for case in text_ls:
+
+            sigle_useless = 0
+            for useless in message_useless:
+                if useless  in case.lower() or not case:
+                    sigle_useless = 1
+
+            if sigle_useless == 0:
+                score_ls.append(case)
+
+            try:
+                int(case)
+                sigle_mode = 1
+            except:
+                pass
+
+        # print(sigle_mode)
+
+
+        # print(score_ls)
+        if sigle_mode == 0:
+            for case in score_ls:
+                num = re.findall(r"(.*?)(\d+\.?\d*)$", case,re.S)
+                name_ls_ex.append(num[0][0])
+                score_ls_ex.append(num[0][1])
+
+
+        if sigle_mode == 1:
+            for case in score_ls:
+                try:
+                    int(case)
+                    score_ls_ex.append(case)
+                except:
+                    name_ls_ex.append(case)
+
+        # print(name_ls_ex,score_ls_ex)
+        if len(name_ls_ex) != len(score_ls_ex) or len(name_ls_ex) != len(self.case_warehouse):
+            print("Case name does not match the number of points!")
+            return 3
+
+        i = 0
+        for name in name_ls_ex:
+            Similarity = self._string_similar(name.lower(),self.case_warehouse[i].lower())
+            if Similarity < 0.6:
+                print("%s：The similarity is too low, pause the extraction, please train the language library or manually extract"%(self.case_warehouse[i]))
+                return 4
+            else:
+                name_ls_ex_finally.append(self.case_warehouse[i])
+                i = i+1
+
+        name_ls_ex_finally.insert(0,"overall")
+        score_ls_ex.insert(0,total_score)
+
+        return name_ls_ex_finally,score_ls_ex
+
+
+    def _string_similar(self,s1, s2):
+        return difflib.SequenceMatcher(lambda x: x==" ", s1, s2).quick_ratio()
+
+
+
 if __name__ == '__main__':
     file_name = "scores.xls"
-    choice = input('1.Jetstream2    2.Speedometer2    3.Ares    4.Webtooling\n' +
+    choice = input('1.Jetstream2    2.Speedometer2    3.Ares    4.Webtooling    5.Unity3D\n' +
                    'Please input number or numbers split by ",":    ')
     if choice:
         choice_list = choice.split(',')
         for i in choice_list:
-            if int(i) not in [1, 2, 3, 4]:
+            if int(i) not in [1, 2, 3, 4, 5]:
                 print("The number is wrong, please run again!")
                 break
         else:
@@ -307,6 +442,10 @@ if __name__ == '__main__':
                         benchs.append(Ares(writer))
                     elif int(i) == 4:
                         benchs.append(Webtooling(writer))
+
+                    elif int(i) == 5:
+                        benchs.append(Unity3D(writer))
+
 
                 for bench in benchs:
                     bench.run()
