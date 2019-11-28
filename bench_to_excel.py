@@ -322,7 +322,8 @@ class Unity3D(Base):
             print(picture)
             image = Image.open(picture)
             text = pytesseract.image_to_string(image,lang="test")
-            result = self._Handle(text)
+            text_total = pytesseract.image_to_string(image,lang="test",config='-psm 1 number')
+            result = self._Handle(text,text_total)
             if result not in [1,2,3,4]:
                 name_ls = result[0]
                 score_ls = result[1]
@@ -331,14 +332,14 @@ class Unity3D(Base):
         return name_ls, score_ls
 
 
-    def _Handle(self,text):
+    def _Handle(self,text,text_total):
         # print(text)
         name_ls_ex = []
         score_ls_ex = []
         name_ls_ex_finally =[]
 
         # Total score
-        total_score = re.findall(r'(\d*)$', text, re.S)
+        total_score = re.findall(r'(\d*)$', text_total, re.S)
         # print(total_score)
         try:
             total_score = total_score[0]
