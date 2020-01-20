@@ -60,16 +60,7 @@ class JetStream2(Base):
         with open(file) as f:
             content = f.read()
 
-        if file.endswith('mhtml'):
-            cont = content.replace("=\n", "")
-            score = re.search(r'<div class=3D"score">(\d+\.\d+)</div>', cont).group(1)
-            name_ls.append('Score')
-            score_ls.append(float(score))
-            cont_ls = re.findall(r'<h3[\d\D]*?><[\d\D]*?>(.*?)</a></h3>[\d\D]*?<h4[\d\D]*?>(.*?)</h4>', cont, re.S)
-            for i in cont_ls:
-                name_ls.append(i[0])
-                score_ls.append(float(i[1]))
-        elif file.endswith('txt'):
+        if file.endswith('txt'):
             cont_ls = re.findall(r'Running (.*?):(.*?)Score: *([0-9]*\.?[0-9]+)', content, re.S)
             total_score = re.findall(r"Total Score: *([0-9]*\.?[0-9]+)", content)
 
@@ -91,7 +82,9 @@ class JetStream2(Base):
                         name_ls.append("____" + j[0])
                         score_ls.append(float(j[1]))
 
-        elif file.endswith('htm') or file.endswith('html'):
+        elif file.endswith('mhtml') or file.endswith('htm') or file.endswith('html'):
+            content = content.replace("=\n", "").replace("=3D", "=")
+
             cont_ls = re.findall(r'<div class="benchmark benchmark-done"(.*?)<h3 class="benchmark-name">(.*?)">(.*?)'
                                  r'</a></h3>(.*?)<h4 class="score"(.*?)">([0-9]*\.?[0-9]+)</h4><p><span class="result"'
                                  r'>(.*?)</div>', content, re.S)
@@ -111,11 +104,11 @@ class JetStream2(Base):
 
                     name_ls.append(i[2])
                     score_ls.append(float(i[5]))
-                    date = re.findall(
-                        r'<span class="result"><span id="(.*?)">([0-9]*\.?[0-9]+)</span><label>(.*?)</label></span>',
+                    data = re.findall(
+                        r'<span id="(.*?)">([0-9]*\.?[0-9]+)</span><label>(.*?)</label></span>',
                         i[6], re.S)
 
-                    for j in date:
+                    for j in data:
                         name_case = '____' + j[2]
                         name_ls.append(name_case)
                         score_ls.append(float(j[1]))
@@ -131,10 +124,10 @@ class JetStream2(Base):
             for i in cont_ls:
                 name_ls.append(i[2])
                 score_ls.append(float(i[5]))
-                date = re.findall(
-                    r'<span class="result"><span id="(.*?)">([0-9]*\.?[0-9]+)</span><label>(.*?)</label></span>', i[6],
+                data = re.findall(
+                    r'<span id="(.*?)">([0-9]*\.?[0-9]+)</span><label>(.*?)</label></span>', i[6],
                     re.S)
-                for j in date:
+                for j in data:
                     name_case = '____' + j[2]
                     name_ls.append(name_case)
                     score_ls.append(float(j[1]))
