@@ -1,24 +1,16 @@
 #!/usr/bin/python3
 import os
 import re
-import pandas as pd
 from pandas import DataFrame
+import argparse
 
 import utils
-import argparse
 
 # unity3d
 import pytesseract
 from PIL import Image
-import sys
 import difflib
 
-parser = argparse.ArgumentParser()
-# parser.usage = help_msg
-parser.add_argument('-m', '--mode', type=str, choices=['simple', 'all'], default="simple",
-                    help="return only scores or all outputs of subcases")
-args = parser.parse_args()
-mode = args.mode
 
 class Base(object):
     def __init__(self, name, folder, writer, mode="simple"):
@@ -31,13 +23,15 @@ class Base(object):
 
 class JetStream2(Base):
     def __init__(self, writer):
-        Base.__init__(self, 'jetstream2', 'jetstream2', writer, mode)
+        Base.__init__(self, 'jetstream2', 'jetstream2', writer)
 
     def run(self):
         src_ls = os.popen("ls %s" % self.folder).readlines()
         src_ls = list(map(lambda x: x.replace('\n', ''), src_ls))
         i = 0
         for src in src_ls:
+            if not src.endswith('html'):
+                continue
             i += 1
             file = self.folder + "/" + src
             print(file)
@@ -45,7 +39,7 @@ class JetStream2(Base):
             if 'name' not in self.df:
                 self.df['name'] = names
             self.df[i] = scores
-
+        # print(self.df)
         stdev = self.df.std(axis=1)
         mean = self.df.mean(axis=1)
         stdev_mean = stdev / mean
@@ -146,6 +140,8 @@ class Speedometer2(Base):
 
         i = 0
         for src in src_ls:
+            if not src.endswith('html'):
+                continue
             i += 1
             file = self.folder + "/" + src
             print(file)
@@ -243,6 +239,7 @@ class Ares(Base):
                 score_ls.append(float(soc.group(2)))
 
         return name_ls, score_ls
+
 
 class Webtooling(Base):
     def __init__(self, writer):
@@ -413,8 +410,14 @@ class Unity3D(Base):
         return difflib.SequenceMatcher(lambda x: x==" ", s1, s2).quick_ratio()
 
 
-
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    # parser.usage = help_msg
+    parser.add_argument('-m', '--mode', type=str, choices=['simple', 'all'], default="simple",
+                        help="return only scores or all outputs of subcases")
+    args = parser.parse_args()
+    mode = args.mode
+
     file_name = "scores.xls"
     choice = input('1.Jetstream2    2.Speedometer2    3.Ares    4.Webtooling    5.Unity3D\n' +
                    'Please input number or numbers split by ",":    ')
@@ -436,12 +439,11 @@ if __name__ == '__main__':
                         benchs.append(Ares(writer))
                     elif int(i) == 4:
                         benchs.append(Webtooling(writer))
-
                     elif int(i) == 5:
                         benchs.append(Unity3D(writer))
 
-
                 for bench in benchs:
+                    bench.mode = mode
                     bench.run()
     else:
         print('The number is none, please run again!')

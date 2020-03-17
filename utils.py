@@ -2,7 +2,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
+import datetime
 import os
 import sys
 import subprocess
@@ -41,7 +41,8 @@ class ExcelWriter:
         self.writer = None
 
     def __enter__(self):
-        self.writer = pd.ExcelWriter("scores.xls")
+        print(self.file_name)
+        self.writer = pd.ExcelWriter(self.file_name)
         return self.writer
 
     def __exit__(self, type, value, traceback):
@@ -231,3 +232,7 @@ def get_available_memory():
         free_mem_final = str(int(free_mem * 0.8)) + kw
     print(free_mem_final)
     return free_mem_final
+
+
+def timezone():
+    return datetime.datetime.now().strftime("%y%m%d-%H%M%S")
