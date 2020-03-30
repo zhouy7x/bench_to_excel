@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import os
 import re
-from sys import argv
 import pandas as pd
 from pandas import DataFrame
 import time
@@ -13,13 +12,6 @@ def dir_args(string):
         msg = "%s is not a directory path!" % string
         raise argparse.ArgumentTypeError(msg)
     return string
-
-parser = argparse.ArgumentParser()
-# parser.usage = help_msg
-parser.add_argument('dir', type=dir_args, nargs=2, help='add jsc and dir')
-
-args = parser.parse_args()
-dir_list = args.dir
 
 
 def extract_data(file):
@@ -37,11 +29,15 @@ def extract_data(file):
     for i in cont_ls:
         name_ls.append(i[0])
         score_ls.append(float(i[2]))
-        others = i[1].replace("\n","")
-        others= re.findall(r" *(.*?): *([0-9]*\.?[0-9]+)", others, re.S)
+        others = i[1].splitlines()
         for j in others:
-            name_ls.append("____"+j[0])
-            score_ls.append(float(j[1]))
+            other = re.search(r" *(.+?): *(\d+\.?\d*)", j)
+            if not other:
+                continue
+            # print(other.group(1))
+            # print(other.group(2))
+            name_ls.append("____"+other.group(1))
+            score_ls.append(float(other.group(2)))
 
     return name_ls, score_ls
 
@@ -122,4 +118,11 @@ def main(dir_list):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    # parser.usage = help_msg
+    parser.add_argument('dir', type=dir_args, nargs=2, help='add jsc and dir')
+
+    args = parser.parse_args()
+    dir_list = args.dir
+
     main(dir_list)

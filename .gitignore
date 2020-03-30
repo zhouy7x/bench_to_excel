@@ -6,8 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# source files
+src/
+
 # Output files
 *.xls
+data/
 
 # Distribution / packaging
 .idea/
