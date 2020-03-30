@@ -4,7 +4,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import datetime
 import os
-import sys
 import subprocess
 import signal
 import pandas as pd
@@ -38,11 +37,15 @@ def chdir(folder):
 class ExcelWriter:
     def __init__(self, name):
         self.file_name = name
+        self.output_dir = "data"
         self.writer = None
 
     def __enter__(self):
         print(self.file_name)
-        self.writer = pd.ExcelWriter(self.file_name)
+        if not os.path.isdir(self.output_dir):
+            os.system('rm -rf data')
+            os.mkdir(self.output_dir)
+        self.writer = pd.ExcelWriter(os.path.join(self.output_dir, self.file_name))
         return self.writer
 
     def __exit__(self, type, value, traceback):
@@ -51,6 +54,7 @@ class ExcelWriter:
 
 def touch_excel(name):
     return ExcelWriter(name)
+
 
 def check_folder(foo):
     def _inside(folder):
@@ -131,7 +135,7 @@ def RunTimedCheckOutput(args, env=os.environ.copy(), timeout=None, **popenargs):
         if type(args) == list:
             print("list......................")
             p = subprocess.Popen(args, bufsize=-1,  env=env, close_fds=True, preexec_fn=os.setsid, 
-                    stdout=subprocess.PIPE, **popenargs)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popenargs)
 
             with Handler(signal.SIGALRM, timeout_handler):
                 try:
@@ -154,7 +158,7 @@ def RunTimedCheckOutput(args, env=os.environ.copy(), timeout=None, **popenargs):
                     # try again.
                     p = subprocess.Popen(args, bufsize=-1, shell=True, env=env, close_fds=True,
                                              preexec_fn=os.setsid,
-                                             stdout=subprocess.PIPE, **popenargs)
+                                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popenargs)
                     try:
                         signal.alarm(timeout)
                         output = p.communicate()[0]
@@ -174,8 +178,8 @@ def RunTimedCheckOutput(args, env=os.environ.copy(), timeout=None, **popenargs):
         else:
             # import subprocess32
             p = subprocess.Popen(args, bufsize=-1, shell=True, env=env, close_fds=True, preexec_fn=os.setsid,
-                    stdout=subprocess.PIPE, **popenargs)
-            #with Handler(signal.SIGALRM, timeout_handler):
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popenargs)
+            # with Handler(signal.SIGALRM, timeout_handler):
             try:
                 output = p.communicate(timeout=timeout)[0]
                 # if we get an alarm right here, nothing too bad should happen
@@ -193,7 +197,7 @@ def RunTimedCheckOutput(args, env=os.environ.copy(), timeout=None, **popenargs):
 
                 # try again.
                 p = subprocess.Popen(args, bufsize=-1, shell=True, env=env, close_fds=True, preexec_fn=os.setsid,
-                            stdout=subprocess.PIPE, **popenargs)
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popenargs)
                 try:
                     output = p.communicate(timeout=timeout)[0]
                     # if we get an alarm right here, nothing too bad should happen
