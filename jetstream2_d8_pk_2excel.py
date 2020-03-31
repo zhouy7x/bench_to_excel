@@ -112,7 +112,7 @@ def main(dir_list):
 
     result_df = pd.concat(df_list)
     sheet_name = '{}'.format(time.strftime("%Y-%m-%d", time.localtime()))
-    writer = pd.ExcelWriter("jetstream2-cli-pk-{}.xls".format(time.strftime("%Y%m%d-%H%M%S", time.localtime())))
+    writer = pd.ExcelWriter("jetstream2-d8-pk-{}.xls".format(time.strftime("%Y%m%d-%H%M%S", time.localtime())))
     result_df.to_excel(writer, sheet_name=sheet_name, index=False)
     writer.save()
 

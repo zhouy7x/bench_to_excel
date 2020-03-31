@@ -22,6 +22,7 @@ parser.add_argument('dir', type=dir_args, nargs=2, help='add jsc and dir')
 args = parser.parse_args()
 dir_list = args.dir
 mode = 'all'
+output_dir = 'data'
 
 
 def extract_data(file):
@@ -103,7 +104,7 @@ def extract_data(file):
     return name_ls, score_ls
 
 
-def to_excel(src, file_list, df, mean1):
+def to_excel(src, file_list, df, mean1, front):
     i = 0
     files_num = len(file_list)
     for file in file_list:
@@ -111,7 +112,9 @@ def to_excel(src, file_list, df, mean1):
         name_ls, score_ls = extract_data(src + file)
         if "subcases" not in df:
             df['subcases'] = name_ls
-        df[file] = score_ls
+        column = front + '_' + file
+        # print(column)
+        df[column] = score_ls
 
     if df.shape[1] == files_num + 1:
         stdev = df.std(axis=1)
@@ -139,15 +142,20 @@ def to_excel(src, file_list, df, mean1):
 def main(dir_list):
     df = DataFrame()
     mean1 = DataFrame()
+    i = 0
     for item in dir_list:
+        if i == 0:
+            front = 'base'
+        elif i == 1:
+            front = 'opt'
         file_list = os.popen('ls ' + item).read().split()
-        if item.endswith('/'):
-            result, mean = to_excel(item, file_list, df, mean1)
-        else:
-            result, mean = to_excel(item+'/', file_list, df, mean1)
+        if not item.endswith('/'):
+            item = item+'/'
+        result, mean = to_excel(item, file_list, df, mean1, front)
 
         if type(mean) == pd.Series:
             mean1 = mean
+        i += 1
 
     score = df.loc[0:0]
     df_column = df.shape[1] - 1  # index start with 1
@@ -173,7 +181,7 @@ def main(dir_list):
 
     result_df = pd.concat(df_list)
     sheet_name = '{}'.format(time.strftime("%Y-%m-%d", time.localtime()))
-    writer = pd.ExcelWriter("jetstream2-cli-pk-{}.xls".format(time.strftime("%Y%m%d-%H%M%S", time.localtime())))
+    writer = pd.ExcelWriter(os.path.join(output_dir, "jetstream2-pk-{}.xls".format(time.strftime("%Y%m%d-%H%M%S", time.localtime()))))
     result_df.to_excel(writer, sheet_name=sheet_name, index=False)
     writer.save()
 
